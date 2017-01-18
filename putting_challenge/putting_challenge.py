@@ -6,6 +6,8 @@ import hug
 import psycopg2
 import psycopg2.pool
 
+api = hug.http(prefixes='/api')
+
 db = psycopg2.pool.SimpleConnectionPool(1,10,
     dbname='putting-challenge',
     user='scott',
@@ -27,25 +29,7 @@ def get_cursor():
     finally:
         db.putconn(conn)
 
-@hug.get('/', output=hug.output_format.html)
-def site_root():
-    '''Returns placeholder HTML'''
-    index = '''<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Putting Challenge</title>
-    <meta name="description" content="Disc Golf Putting Challenge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  <body>
-    <h1>Hello.</h1>
-  </body>
-</html>'''
-    return index
-
-@hug.get('/scorecards')
+@api.get('/scorecards')
 def get_scorecards():
     '''Returns a json list of scorecards'''
     scorecards = {}
@@ -54,7 +38,7 @@ def get_scorecards():
         scorecards = cur.fetchall()
     return scorecards
 
-@hug.get('/scorecards/{id}')
+@api.get('/scorecards/{id}')
 def get_scorecard(id: hug.types.number, response):
     '''Returns the scorecard requested by "id" in json format'''
     select = "SELECT * FROM scorecards WHERE id = {id}".format(id=id)
@@ -65,7 +49,7 @@ def get_scorecard(id: hug.types.number, response):
         response.status = HTTP_404
     return scorecard
 
-@hug.post('/scorecards')
+@api.post('/scorecards')
 def create_scorecard(body):
     '''Create a new scorecard'''
     id = ''
@@ -105,7 +89,7 @@ def create_scorecard(body):
         id = cur.fetchone()[0]
     return id
 
-@hug.delete('/scorecards/{id}')
+@api.delete('/scorecards/{id}')
 def delete_scorecard(id: hug.types.number, response):
     '''Deletes the scorecard requested by "id"'''
     delete = "DELETE FROM scorecards WHERE id = {}".format(id=id)
